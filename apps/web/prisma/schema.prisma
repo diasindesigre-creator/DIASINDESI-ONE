@@ -1,0 +1,162 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum RepairStatus {
+  RECEIVED
+  DIAGNOSIS
+  WAITING_PARTS
+  IN_PROGRESS
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+model Customer {
+  id        Int     @id @default(autoincrement())
+  name      String
+  mobile    String
+  phone     String?
+  email     String?
+  city      String?
+  address   String?
+  vatNumber String?
+  notes     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  devices Device[]
+}
+
+model Device {
+  id Int @id @default(autoincrement())
+
+  customerId Int
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  category     String
+  brand        String
+  model        String
+  serialNumber String?
+  password     String?
+  accessories  String?
+
+  createdAt DateTime @default(now())
+
+  services Service[]
+}
+
+model Service {
+  id Int @id @default(autoincrement())
+
+  deviceId Int
+  device   Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  problem   String
+  diagnosis String?
+  solution  String?
+
+  status RepairStatus @default(RECEIVED)
+
+  technician String?
+  cost       Float?
+
+  qrCode String?
+
+  receivedAt  DateTime  @default(now())
+  deliveredAt DateTime?
+
+  photos ServicePhoto[]
+}
+
+model ServicePhoto {
+  id Int @id @default(autoincrement())
+
+  serviceId Int
+  service   Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  filename String
+
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  products Product[]
+}
+
+model Product {
+  id Int @id @default(autoincrement())
+
+  code    String? @unique
+  barcode String? @unique
+
+  name String
+
+  description String?
+
+  categoryId Int?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  brand String?
+
+  cost  Float?
+  price Float
+
+  stock    Int @default(0)
+  minStock Int @default(0)
+
+  image String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id Int @id @default(autoincrement())
+
+  company String
+  phone   String?
+  email   String?
+
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  id Int @id @default(1)
+
+  companyName String
+  phone       String?
+  email       String?
+  address     String?
+
+  logo String?
+}
+enum UserRole {
+  ADMIN
+  TECHNICIAN
+  SELLER
+}
+
+model User {
+  id Int @id @default(autoincrement())
+
+  username String @unique
+  password String
+
+  fullName String
+
+  role UserRole @default(TECHNICIAN)
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+}
